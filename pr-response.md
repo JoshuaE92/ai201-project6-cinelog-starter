@@ -26,8 +26,11 @@ I used AI tooling in three bounded ways on this project:
    privacy-by-default objection (Comment 4) and the list-stability objection
    (Comment 5), which I then explicitly acknowledged in my write-ups below.
 
-The two design *decisions* are my own; AI was used to pressure-test and to help
-draft the prose after I'd settled the positions, not to choose them.
+The two design *decisions* are my own. I based both on my own experience with
+Letterboxd (public/private watchlists on a sharing platform for Comment 4, and
+date-added ordering feeling more like a journey for Comment 5), then used AI to
+tighten the grammar and phrasing — not to choose the positions or supply the
+reasoning.
 
 ---
 
@@ -90,64 +93,59 @@ the full suite is green (11 passed).
 
 ## Comment 4 — Default visibility (`public=True`)
 
-**My position:** Keep `public=True` as the default — but make it an *explicit,
-documented* decision (which is what @dev-lead actually asked for), and pair it
-with a per-call opt-out.
+**My position:** Keep `public=True` as the default, but add a private toggle so
+users who want it can opt out. I want this to be an explicit, documented choice,
+which is what @dev-lead asked for.
 
 **Reasoning (grounded in CineLog):**
-CineLog is a *community* film-tracking app — its value comes from users seeing
-what other people are tracking and planning to watch. A watchlist is
-*aspirational intent* ("films I want to watch"), which is lower-sensitivity than
-something like private ratings or a viewing diary, and it's exactly the signal
-that powers the social loop: "what are my friends planning to watch this
-weekend?" Defaulting to public maximizes that network effect and keeps friction
-to zero — a user doesn't have to flip a toggle to participate in the community
-the product is built around. The `WatchlistEntry` model already carries a
-per-entry `public` boolean, which tells me the original design intends
-visibility to be a first-class, user-controlled property rather than a hidden
-global — so `public=True` is a sensible community-first default, not an
-accident.
+I'm drawing on Letterboxd here, since it's the closest comparison to what we're
+building. On Letterboxd a user can make their watchlist public or private, but
+because it's a sharing platform, most of the value comes from being able to see
+what other people are planning to watch. CineLog is the same kind of sharing
+platform, so I think we should lean into that and start watchlists public by
+default — that's where the social discovery and engagement come from. The
+`WatchlistEntry` model already has a per-entry `public` boolean, so the design
+already treats visibility as something the user controls rather than a hidden
+global. Defaulting to public just makes the community side work out of the box,
+while still leaving room for people who want privacy.
 
 **Tradeoff acknowledged:**
-This violates privacy-by-default / the principle of least surprise. Some users
-will assume a watchlist is private and be surprised it's visible. I'm mitigating
-that two ways: (1) I added a `public` parameter to `add_to_watchlist()` (see
-Stretch features) so a privacy-conscious caller can create a private entry
-deliberately, and because visibility is per-entry, a user can keep sensitive
-picks private while sharing the rest; (2) I'd recommend the UI surface the
-public/private state clearly at add time (e.g. a one-time onboarding note). If
-we see real confusion or complaints in practice, flipping the default to private
-is a one-line change — but I'd rather start community-first for a product whose
-core value is discovery, and revisit with data.
+The downside is that a public default can surprise users who assumed their
+watchlist was private, and I'm not ignoring that. I mitigate it with the private
+toggle: I added a `public` parameter to `add_to_watchlist()` so a user can create
+a private entry deliberately, and because visibility is per-entry, they can keep
+certain films private while sharing the rest. If we ever see that
+public-by-default is causing real confusion, flipping the default is a one-line
+change — but for a sharing-first platform like ours, I'd rather start public and
+give people the option, the way Letterboxd does.
 
 ---
 
 ## Comment 5 — Sort order
 
-**My position:** Agree with @dev-lead — switch the default from alphabetical
-(by title) to **date added, most recent first**.
+**My position:** Agree with @dev-lead — switch from alphabetical (by title) to
+**date added, most recent first**.
 
 **Engagement with the reviewer's point:**
-@dev-lead's reasoning ("most users want to see what they added recently") is
-right for how a watchlist is actually used: it's a *queue* of things you just
-heard about and want to get to, so the most recently added item is the most
-top-of-mind. There's also a CineLog-specific consistency argument that clinches
-it for me — `get_collection()` already sorts by `date_added` descending. Having
-the watchlist sort alphabetically while the near-identical collection view sorts
-by recency is an inconsistency in both UX and code pattern; aligning them lowers
-cognitive load for users and keeps the two services parallel for the next
-contributor.
+This lines up with what @dev-lead said about people wanting to see what they
+added recently, and it also matches my own experience as a Letterboxd user. When
+I open a list, I want to see it in the order I added things, not alphabetically —
+it's way more engaging that way, and it feels more like a journey or a timeline
+of what I've been meaning to watch than a flat A–Z index. There's also a
+CineLog-specific reason: `get_collection()` already sorts by `date_added`
+descending, so sorting the watchlist the same way keeps the two views consistent
+for users and keeps the code parallel for the next contributor.
 
-The case *for* alphabetical is title lookup — finding a known film in a long
-list — but that's a search/filter concern, not what a default sort should
-optimize. A watchlist is a discovery/queue surface people skim, not a reference
-table they scan by letter.
+The main argument for alphabetical is looking up a film you already know is on
+the list, but that's really a search/filter job, not what the default sort
+should be optimizing for. A watchlist is something you skim for your next watch,
+not a reference table you scan by letter.
 
 **Tradeoff acknowledged:**
-Date-added ordering means the list reorders every time you add a film, so a user
-who memorized positions loses that stability. For a personal queue that's an
-acceptable trade, and if stable ordering is ever needed we can expose sort as an
-explicit query parameter later.
+Sorting by date added means the list reorders each time you add a film, so anyone
+who memorized positions loses that. For a personal queue I think that's a fair
+trade, and if stable ordering ever matters we can add sort as a query parameter
+later.
 
 **What I did:** Changed `get_watchlist()` to
 `order_by(WatchlistEntry.date_added.desc())` (dropping the now-unneeded title
