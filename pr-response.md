@@ -214,27 +214,20 @@ route (`{ "film_id": <int> }` → `{ "film_id": "<uuid>" }`).
 ## Commit history
 
 Rewritten into clean, one-logical-change-per-commit Conventional Commits, rebased
-on `main` with no merge commits:
+on `main` with no merge commits (`git log --oneline`):
+
+![git log --oneline showing 9 conventional commits with no merge commits](docs/git-log-screenshot.png)
 
 ```
-git log --oneline origin/main..HEAD
-```
-
-<!-- SCREENSHOT: paste your `git log --oneline` screenshot here.
-     The text of the final history is below (commit hashes will differ slightly
-     in your live repo since the docs commit is amended after this file is
-     written — take the screenshot after your final push). -->
-
-```
-docs: add pr-response.md with review responses and design decisions
-refactor: sort watchlist by date added instead of title
-fix: add Film.watchlist_entries relationship so get_watchlist can load films
-test: add watchlist service tests
-feat: allow explicit visibility via public param on add_to_watchlist
-feat: add remove_from_watchlist service and DELETE endpoint
-fix: add deduplication check to prevent duplicate watchlist entries
-fix: rename save_to_watchlist to add_to_watchlist per naming convention
-feat: add watchlist model, service, and endpoints
+55b2d07 docs: add pr-response.md with review responses and design decisions
+057c830 refactor: sort watchlist by date added instead of title
+745eeab fix: add Film.watchlist_entries relationship so get_watchlist can load films
+e8c0feb test: add watchlist service tests
+de38964 feat: allow explicit visibility via public param on add_to_watchlist
+5619aa5 feat: add remove_from_watchlist service and DELETE endpoint
+1daebe7 fix: add deduplication check to prevent duplicate watchlist entries
+88b36c3 fix: rename save_to_watchlist to add_to_watchlist per naming convention
+17e654e feat: add watchlist model, service, and endpoints
 ```
 
 9 commits, all Conventional Commits, no merge commits, rebased on `main`.
