@@ -90,13 +90,13 @@ def get_watchlist(user_id):
         user_id (str): UUID of the user.
 
     Returns:
-        list[dict]: List of film dicts with watchlist metadata attached.
+        list[dict]: List of film dicts with watchlist metadata attached,
+                    sorted by date added (most recently added first).
     """
     entries = (
         WatchlistEntry.query
         .filter_by(user_id=user_id)
-        .join(Film)
-        .order_by(Film.title.asc())
+        .order_by(WatchlistEntry.date_added.desc())
         .all()
     )
 
